@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Review Platform</title>
+</head>
+<body>
+<h2>Add Business</h2>
+<input id="bname" placeholder="Name">
+<button onclick="addBusiness()">Add</button>
+
+<h2>Add Review</h2>
+<input id="bid" placeholder="Business ID">
+<input id="rating" placeholder="Rating">
+<input id="comment" placeholder="Comment">
+<button onclick="addReview()">Submit Review</button>
+
+<h2>Approved Reviews</h2>
+<button onclick="loadReviews()">Load</button>
+<pre id="out"></pre>
+
+<script>
+    function addBusiness() {
+     fetch('/business', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({name: bname.value})
+     });
+    }
+
+    function addReview() {
+     fetch('/review', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        businessId: bid.value,
+        rating: rating.value,
+        comment: comment.value
+      })
+     });
+    }
+
+    function loadReviews() {
+     fetch('/reviews/' + bid.value)
+      .then(r=>r.json())
+      .then(d=>out.textContent=JSON.stringify(d,null,2));
+    }
+</script>
+</body>
+</html>
