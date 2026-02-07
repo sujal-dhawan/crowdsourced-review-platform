@@ -1,49 +1,102 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Review Platform</title>
 </head>
+
 <body>
+
 <h2>Add Business</h2>
-<input id="bname" placeholder="Name">
+<input id="name" placeholder="Name">
+<input id="category" placeholder="Category">
+<input id="location" placeholder="Location">
 <button onclick="addBusiness()">Add</button>
+
+<hr>
 
 <h2>Add Review</h2>
 <input id="bid" placeholder="Business ID">
-<input id="rating" placeholder="Rating">
-<input id="comment" placeholder="Comment">
-<button onclick="addReview()">Submit Review</button>
+<input id="rating" placeholder="Rating (1-5)">
+<input id="text" placeholder="Comment">
+<button onclick="addReview()">Submit</button>
+
+<hr>
 
 <h2>Approved Reviews</h2>
+<input id="viewId" placeholder="Business ID">
 <button onclick="loadReviews()">Load</button>
+
+<h3 id="businessName"></h3>
+<h4 id="avg"></h4>
 <pre id="out"></pre>
 
 <script>
     function addBusiness() {
-     fetch('/business', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({name: bname.value})
-     });
+        fetch('/business', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: document.getElementById("name").value,
+                category: document.getElementById("category").value,
+                location: document.getElementById("location").value
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            alert("Business added! ID = " + data.id);
+        })
+        .catch(err => {
+            alert("Error adding business");
+            console.error(err);
+        });
     }
 
     function addReview() {
-     fetch('/review', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        businessId: bid.value,
-        rating: rating.value,
-        comment: comment.value
-      })
-     });
+        fetch('/review', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                businessId: bid.value,
+                rating: rating.value,
+                reviewText: text.value
+            })
+        })
+        .then(() => alert("Review submitted (Pending approval)"));
     }
 
     function loadReviews() {
-     fetch('/reviews/' + bid.value)
-      .then(r=>r.json())
-      .then(d=>out.textContent=JSON.stringify(d,null,2));
+        const id = document.getElementById("viewId").value;
+
+        // Fetch business info
+        fetch(`/business/${id}`)
+            .then(res => res.json())
+            .then(b => {
+                document.getElementById("businessName").textContent =
+                    "🏢 Business: " + b.name;
+
+                document.getElementById("avg").textContent =
+                    "⭐ Average Rating: " + b.avgRating;
+            });
+
+        // Fetch approved reviews
+        fetch(`/reviews/${id}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.length === 0) {
+                    out.textContent = "No approved reviews.";
+                    return;
+                }
+
+                let text = "";
+                data.forEach(r => {
+                    text += `⭐ Rating: ${r.rating}\n`;
+                    text += `📝 Comment: ${r.reviewText}\n\n`;
+                });
+                out.textContent = text;
+            });
     }
 </script>
+
 </body>
 </html>

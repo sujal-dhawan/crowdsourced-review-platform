@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@CrossOrigin
+@CrossOrigin("*")
 public class ApiController {
 
     private final BusinessRepository businessRepo;
@@ -22,30 +22,71 @@ public class ApiController {
 
     @GetMapping("/")
     public String home() {
-        return "Backend running";
+        return "Review Platform Backend Running";
+    }
+
+    // -------- BUSINESS --------
+    @GetMapping("/businesses")
+    public List<Business> getAllBusinesses() {
+        return businessRepo.findAll();
     }
 
     @PostMapping("/business")
-    public Business addBusiness(@RequestBody Business b) {
-        return businessRepo.save(b);
+    public Business addBusiness(@RequestBody Business business) {
+        business.setAvgRating(0.0);
+        return businessRepo.save(business);
     }
 
+    @GetMapping("/business/{id}")
+    public Business getBusiness(@PathVariable Long id) {
+        return businessRepo.findById(id).orElseThrow();
+    }
+
+
+    // -------- REVIEWS --------
     @PostMapping("/review")
-    public Review addReview(@RequestBody Review r) {
-        r.setStatus("PENDING");
-        return reviewRepo.save(r);
-    }
-
-    @PutMapping("/review/{id}/approve")
-    public Review approve(@PathVariable Long id) {
-        Review r = reviewRepo.findById(id).orElseThrow();
-        r.setStatus("APPROVED");
-        return reviewRepo.save(r);
+    public Review addReview(@RequestBody Review review) {
+        review.setStatus("PENDING");   // moderation enabled
+        return reviewRepo.save(review);
     }
 
     @GetMapping("/reviews/{businessId}")
-    public List<Review> approvedReviews(@PathVariable Long businessId) {
+    public List<Review> getApprovedReviews(@PathVariable Long businessId) {
         return reviewRepo.findByBusinessIdAndStatus(businessId, "APPROVED");
     }
-}
 
+    // -------- ADMIN --------
+    @GetMapping("/admin/reviews/pending")
+    public List<Review> getPendingReviews() {
+        return reviewRepo.findByStatus("PENDING");
+    }
+
+    @GetMapping("/review/{id}/approve")
+    public Review approveReview(@PathVariable Long id) {
+        Review review = reviewRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Review not found"));
+
+        review.setStatus("APPROVED");
+        reviewRepo.save(review);
+
+        updateAvgRating(review.getBusinessId());
+        return review;
+    }
+
+    // -------- HELPER --------
+    private void updateAvgRating(Long businessId) {
+        List<Review> approved = reviewRepo
+                .findByBusinessIdAndStatus(businessId, "APPROVED");
+
+        double avg = approved.stream()
+                .mapToInt(Review::getRating)
+                .average()
+                .orElse(0.0);
+
+        Business business = businessRepo.findById(businessId)
+                .orElseThrow(() -> new RuntimeException("Business not found"));
+
+        business.setAvgRating(Math.round(avg * 10.0) / 10.0);
+        businessRepo.save(business);
+    }
+}

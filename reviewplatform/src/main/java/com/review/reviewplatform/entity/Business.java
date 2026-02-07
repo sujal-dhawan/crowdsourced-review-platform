@@ -3,23 +3,28 @@ package com.review.reviewplatform.entity;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "business")
+@Table(name = "businesses")
 public class Business {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "business_id")
     private Long id;
 
+    @Column(nullable = false)
     private String name;
+
     private String category;
-    private String city;
+
+    private String location;
+
+    @Column(name = "avg_rating")
+    private Double avgRating = 0.0;
+
+    // -------- GETTERS & SETTERS --------
 
     public Long getId() {
         return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public String getName() {
@@ -38,11 +43,19 @@ public class Business {
         this.category = category;
     }
 
-    public String getCity() {
-        return city;
+    public String getLocation() {
+        return location;
     }
 
-    public void setCity(String city) {
-        this.city = city;
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public Double getAvgRating() {
+        return avgRating;
+    }
+
+    public void setAvgRating(Double avgRating) {
+        this.avgRating = avgRating;
     }
 }
